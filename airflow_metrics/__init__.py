@@ -11,3 +11,6 @@ def patch():
 
     from airflow_metrics.airflow_metrics.patch_thread import patch_thread
     patch_thread()
+
+    from airflow_metrics.airflow_metrics.patch_bq import patch_bq
+    patch_bq()
