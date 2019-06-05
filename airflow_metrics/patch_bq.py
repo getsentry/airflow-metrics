@@ -37,8 +37,24 @@ def bq_upserted(ctx, self, *args, **kwargs):
     Stats.gauge(metric_id, written)
 
 
+def bq_duration(ctx, self, *args, **kwargs):
+    stats = ctx['job']['statistics']
+    creation = int(stats['creationTime'])
+    start = int(stats['startTime'])
+    end = int(stats['endTime'])
+
+    delay_metric = 'dag.{}.{}.bq.delay'.format(self.dag_id,
+                                               self.task_id)
+    duration_metric = 'dag.{}.{}.bq.duration'.format(self.dag_id,
+                                                     self.task_id)
+
+    Stats.timing(delay_metric, start - creation)
+    Stats.timing(duration_metric, end - start)
+
+
 def patch_bq():
     bq_operator_execute_manager = HookManager(BigQueryOperator, 'execute')
     bq_operator_execute_manager.register_post_hook(get_bq_job)
     bq_operator_execute_manager.register_post_hook(bq_upserted)
+    bq_operator_execute_manager.register_post_hook(bq_duration)
     bq_operator_execute_manager.wrap_method(skip_on_fail=True)
