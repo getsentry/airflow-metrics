@@ -1,6 +1,7 @@
 from airflow.models import TaskInstance
 from airflow.settings import Stats
 from airflow.utils.db import provide_session
+from airflow.utils.log.logging_mixin import LoggingMixin
 from datetime import datetime, timedelta
 from pytz import utc
 from threading import Thread
@@ -54,10 +55,17 @@ def forever(fns, sleep_time):
 
 
 def patch_thread():
-    if sys.argv[1] == 'scheduler':
-        fns = [
-            task_states,
-            bq_task_states,
-        ]
-        thread = Thread(target=forever(fns, 10))
-        thread.start()
+    try:
+        if sys.argv[1] == 'scheduler':
+            fns = [
+                task_states,
+                bq_task_states,
+            ]
+            thread = Thread(target=forever(fns, 10))
+            thread.start()
+    except Exception as e:
+        # if any of this throws an error, then we're not in any
+        # state to start this metrics thread, so give up now
+        log = LoggingMixin().log
+        msg = 'The following error occured starting the metrics thread! Skipping...\n{}'
+        log.warn(msg.format(str(e)))
