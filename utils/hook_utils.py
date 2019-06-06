@@ -1,5 +1,6 @@
 from airflow.utils.log.logging_mixin import LoggingMixin
 from functools import wraps
+from itertools import chain
 
 
 class HookException(Exception):
@@ -41,6 +42,26 @@ class HookManager(LoggingMixin):
 
         self.pre_hooks = []
         self.post_hooks = []
+
+    def post_process(self):
+        if self.pre_hooks:
+            msg = 'post process only runs the post_hooks but {} pre_hook(s) found'
+            self.log.warn(msg.format(len(self.pre_hooks)))
+
+        # TODO: check that this is a method?
+        method = getattr(self.cls, self.method_name)
+
+        @wraps(method)
+        def wrapped_method(*args, **kwargs):
+            return_value = method(*args, **kwargs)
+
+            context = {}
+            for fn in self.post_hooks:
+                return_value = fn(return_value, context, *args, **kwargs)
+
+            return return_value
+
+        setattr(self.cls, self.method_name, wrapped_method)
 
     def wrap_method(self, skip_on_fail=False):
         # TODO: check that this is a method?
