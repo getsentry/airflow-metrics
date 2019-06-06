@@ -54,11 +54,10 @@ def forever(fns, sleep_time):
 
 
 def patch_thread():
-    if sys.argv[1] == 'webserver':
+    if sys.argv[1] == 'scheduler':
         fns = [
             task_states,
             bq_task_states,
         ]
         thread = Thread(target=forever(fns, 10))
         thread.start()
-        thread.join()
