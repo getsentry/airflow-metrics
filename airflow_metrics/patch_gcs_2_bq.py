@@ -46,6 +46,13 @@ def bq_duration(ctx, self, *args, **kwargs):
     Stats.timing(duration_metric, end - start)
 
 
+def rows_copied(ctx, self, *args, **kwargs):
+    rows = ctx['job']['statistics']['load']['outputRows']
+    metric_id = 'dag.{}.{}.gcs_2_bq.copied'.format(self.dag_id,
+                                               self.task_id)
+    Stats.gauge(metric_id, rows)
+
+
 def patch_gcs_2_bq():
     bq_connection_cursor_manager = HookManager(BigQueryConnection, 'cursor')
     bq_connection_cursor_manager.register_post_hook(attach_cursor)
@@ -54,4 +61,5 @@ def patch_gcs_2_bq():
     gcs_to_bq_operator_execute_manager = HookManager(GoogleCloudStorageToBigQueryOperator, 'execute')
     gcs_to_bq_operator_execute_manager.register_post_hook(get_bq_job)
     gcs_to_bq_operator_execute_manager.register_post_hook(bq_duration)
+    gcs_to_bq_operator_execute_manager.register_post_hook(rows_copied)
     gcs_to_bq_operator_execute_manager.wrap_method(skip_on_fail=True)
