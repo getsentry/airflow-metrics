@@ -32,9 +32,12 @@ def bq_upserted(ctx, self, *args, **kwargs):
 
         written += int(stat['recordsWritten'])
 
-    metric_id = 'dag.{}.{}.bq.upserted'.format(self.dag_id,
-                                               self.task_id)
-    Stats.gauge(metric_id, written)
+    tags = {
+        'dag': self.dag_id,
+        'task': self.task_id,
+        'operator': self.__class__.__name__,
+    }
+    Stats.gauge('task.upserted.bq', written, tags=tags)
 
 
 def bq_duration(ctx, self, *args, **kwargs):
@@ -43,13 +46,13 @@ def bq_duration(ctx, self, *args, **kwargs):
     start = int(stats['startTime'])
     end = int(stats['endTime'])
 
-    delay_metric = 'dag.{}.{}.bq.delay'.format(self.dag_id,
-                                               self.task_id)
-    duration_metric = 'dag.{}.{}.bq.duration'.format(self.dag_id,
-                                                     self.task_id)
-
-    Stats.timing(delay_metric, start - creation)
-    Stats.timing(duration_metric, end - start)
+    tags = {
+        'dag': self.dag_id,
+        'task': self.task_id,
+        'operator': self.__class__.__name__,
+    }
+    Stats.timing('task.delay.bq', start - creation, tags=tags)
+    Stats.timing('task.duration.bq', end - start, tags=tags)
 
 
 @once

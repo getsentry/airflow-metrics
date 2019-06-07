@@ -20,7 +20,11 @@ def task_states(since, session=None):
     )
 
     for state, count in states:
-        Stats.gauge('dag.task.state.{}'.format(state), count)
+        if state is None:
+            continue
+
+        tags = { 'state': state }
+        Stats.gauge('task.state', count, tags=tags)
 
 
 @provide_session
@@ -32,15 +36,12 @@ def bq_task_states(since, session=None):
         .group_by(TaskInstance.state)
     )
 
-    total = 0
     for state, count in states:
         if state is None:
             continue
 
-        Stats.incr('dag.task.bq.state.{}'.format(state), count)
-        total += count
-
-    Stats.incr('dag.task.bq.count', total)
+        tags = { 'state': state }
+        Stats.incr('task.state.bq', count, tags=tags)
 
 
 def forever(fns, sleep_time):
