@@ -1,5 +1,6 @@
 from airflow.contrib.operators.bigquery_operator import BigQueryOperator
 from airflow.settings import Stats
+from airflow_metrics.utils.fn_utils import once
 from airflow_metrics.utils.hook_utils import HookManager
 
 
@@ -51,6 +52,7 @@ def bq_duration(ctx, self, *args, **kwargs):
     Stats.timing(duration_metric, end - start)
 
 
+@once
 def patch_bq():
     bq_operator_execute_manager = HookManager(BigQueryOperator, 'execute')
     bq_operator_execute_manager.register_post_hook(get_bq_job)

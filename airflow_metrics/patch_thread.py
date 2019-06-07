@@ -2,6 +2,7 @@ from airflow.models import TaskInstance
 from airflow.settings import Stats
 from airflow.utils.db import provide_session
 from airflow.utils.log.logging_mixin import LoggingMixin
+from airflow_metrics.utils.fn_utils import once
 from datetime import datetime, timedelta
 from pytz import utc
 from threading import Thread
@@ -54,6 +55,7 @@ def forever(fns, sleep_time):
     return fn
 
 
+@once
 def patch_thread():
     try:
         if sys.argv[1] == 'scheduler':

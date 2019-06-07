@@ -1,6 +1,7 @@
 from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
 from airflow.contrib.hooks.bigquery_hook import BigQueryConnection
 from airflow.settings import Stats
+from airflow_metrics.utils.fn_utils import once
 from airflow_metrics.utils.hook_utils import HookManager
 
 import sys
@@ -53,6 +54,7 @@ def rows_copied(ctx, self, *args, **kwargs):
     Stats.gauge(metric_id, rows)
 
 
+@once
 def patch_gcs_2_bq():
     bq_connection_cursor_manager = HookManager(BigQueryConnection, 'cursor')
     bq_connection_cursor_manager.register_post_hook(attach_cursor)
