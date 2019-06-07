@@ -38,19 +38,23 @@ def bq_duration(ctx, self, *args, **kwargs):
     start = int(stats['startTime'])
     end = int(stats['endTime'])
 
-    delay_metric = 'dag.{}.{}.gcs_to_bq.delay'.format(self.dag_id,
-                                               self.task_id)
-    duration_metric = 'dag.{}.{}.gcs_to_bq.duration'.format(self.dag_id,
-                                                     self.task_id)
-    Stats.timing(delay_metric, start - creation)
-    Stats.timing(duration_metric, end - start)
+    tags = {
+        'dag': self.dag_id,
+        'task': self.task_id,
+        'operator': self.__class__.__name__,
+    }
+    Stats.timing('task.delay.gcs_to_bq', start - creation, tags=tags)
+    Stats.timing('task.duration.gcs_to_bq', end - start, tags=tags)
 
 
 def rows_copied(ctx, self, *args, **kwargs):
     rows = ctx['job']['statistics']['load']['outputRows']
-    metric_id = 'dag.{}.{}.gcs_2_bq.copied'.format(self.dag_id,
-                                               self.task_id)
-    Stats.gauge(metric_id, rows)
+    tags = {
+        'dag': self.dag_id,
+        'task': self.task_id,
+        'operator': self.__class__.__name__,
+    }
+    Stats.gauge('task.upserted.gcs_to_bq', rows, tags=tags)
 
 
 def patch_gcs_2_bq():

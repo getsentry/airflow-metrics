@@ -1,6 +1,7 @@
 from airflow.exceptions import AirflowException
 from airflow.hooks.base_hook import BaseHook
 from airflow.utils.log.logging_mixin import LoggingMixin
+from atexit import register, unregister
 from datadog import initialize, ThreadStats
 from datetime import timedelta
 
@@ -25,22 +26,37 @@ class DatadogStatsLogger(BaseHook, LoggingMixin):
         self.stats = ThreadStats()
         self.stats.start()
 
-    def incr(self, stat, count=1, rate=1):
+        register(self.stop)
+
+    def incr(self, stat, count=1, rate=1, tags=None):
         self.log.info('datadog incr: {} {} {}'.format(stat, count, rate))
-        self.stats.increment(stat, value=count, sample_rate=rate)
+        self.stats.increment(stat, value=count, sample_rate=rate,
+                             tags=self._format_tags(tags))
 
-    def decr(self, stat, count=1, rate=1):
+    def decr(self, stat, count=1, rate=1, tags=None):
         self.log.info('datadog decr: {} {} {}'.format(stat, count, rate))
-        self.stats.decrement(stat, value=count, sample_rate=rate)
+        self.stats.decrement(stat, value=count, sample_rate=rate,
+                             tags=self._format_tags(tags))
 
-    def gauge(self, stat, value, rate=1, delta=False):
+    def gauge(self, stat, value, rate=1, delta=False, tags=None):
         self.log.info('datadog gauge: {} {} {} {}'.format(stat, value, rate, delta))
         if delta:
             self.log.warning('Deltas are unsupported in Datadog')
-        self.stats.gauge(stat, value, sample_rate=rate)
+        self.stats.gauge(stat, value, sample_rate=rate,
+                         tags=self._format_tags(tags))
 
-    def timing(self, stat, delta, rate=1):
+    def timing(self, stat, delta, rate=1, tags=None):
         self.log.info('datadog timing: {} {}'.format(stat, delta))
         if isinstance(delta, timedelta):
             delta = delta.total_seconds() * 1000.
-        self.stats.timing(stat, delta, sample_rate=rate)
+        self.stats.timing(stat, delta, sample_rate=rate,
+                          tags=self._format_tags(tags))
+
+    def _format_tags(self, tags):
+        if not tags:
+            return None
+        return ['{}:{}'.format(k, v) for k, v in tags.items()]
+
+    def stop(self):
+        unregister(self.stop)
+        self.stats.stop()

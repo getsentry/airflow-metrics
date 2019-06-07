@@ -7,20 +7,22 @@ from airflow.settings import Stats
 
 def dag_duration(target=None, new=None, old=None):
     if target.start_date and target.end_date:
-        metric_id = 'dag.{}.{}.duration'.format(target.dag_id,
-                                                target.state)
         duration = (target.end_date - target.start_date).total_seconds()
-
-        Stats.timing(metric_id, duration * 1000)
+        tags = {
+            'dag': target.dag_id,
+        }
+        Stats.timing('dag.duration', duration * 1000, tags=tags)
 
 
 def task_duration(target=None, new=None, old=None):
     if target.duration:
-        metric_id = 'dag.{}.{}.{}.duration'.format(target.dag_id,
-                                                   target.task_id,
-                                                   target.state)
-
-        Stats.timing(metric_id, target.duration * 1000)
+        tags = {
+            'dag': target.dag_id,
+            'task': target.task_id,
+            'state': target.state,
+            'operator': target.operator,
+        }
+        Stats.timing('task.duration', target.duration * 1000, tags=tags)
 
 
 @once
