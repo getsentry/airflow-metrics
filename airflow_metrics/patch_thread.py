@@ -62,6 +62,7 @@ def patch_thread():
                 bq_task_states,
             ]
             thread = Thread(target=forever(fns, 10))
+            thread.daemon = True
             thread.start()
     except Exception as e:
         # if any of this throws an error, then we're not in any
