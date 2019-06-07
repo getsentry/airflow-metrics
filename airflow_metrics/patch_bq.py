@@ -1,5 +1,4 @@
 from airflow.contrib.operators.bigquery_operator import BigQueryOperator
-from airflow.contrib.hooks.bigquery_hook import BigQueryCursor
 from airflow.settings import Stats
 from airflow_metrics.utils.hook_utils import HookManager
 
