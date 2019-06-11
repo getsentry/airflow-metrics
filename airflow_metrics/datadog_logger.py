@@ -29,24 +29,24 @@ class DatadogStatsLogger(BaseHook, LoggingMixin):
         register(self.stop)
 
     def incr(self, stat, count=1, rate=1, tags=None):
-        self.log.info('datadog incr: {} {} {}'.format(stat, count, rate))
+        self.log.info('datadog incr: {} {} {} {}'.format(stat, count, rate, tags))
         self.stats.increment(stat, value=count, sample_rate=rate,
                              tags=self._format_tags(tags))
 
     def decr(self, stat, count=1, rate=1, tags=None):
-        self.log.info('datadog decr: {} {} {}'.format(stat, count, rate))
+        self.log.info('datadog decr: {} {} {} {}'.format(stat, count, rate, tags))
         self.stats.decrement(stat, value=count, sample_rate=rate,
                              tags=self._format_tags(tags))
 
     def gauge(self, stat, value, rate=1, delta=False, tags=None):
-        self.log.info('datadog gauge: {} {} {} {}'.format(stat, value, rate, delta))
+        self.log.info('datadog gauge: {} {} {} {} {}'.format(stat, value, rate, delta, tags))
         if delta:
             self.log.warning('Deltas are unsupported in Datadog')
         self.stats.gauge(stat, value, sample_rate=rate,
                          tags=self._format_tags(tags))
 
     def timing(self, stat, delta, rate=1, tags=None):
-        self.log.info('datadog timing: {} {}'.format(stat, delta))
+        self.log.info('datadog timing: {} {} {}'.format(stat, delta, tags))
         if isinstance(delta, timedelta):
             delta = delta.total_seconds() * 1000.
         self.stats.timing(stat, delta, sample_rate=rate,

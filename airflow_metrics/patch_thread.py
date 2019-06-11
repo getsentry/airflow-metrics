@@ -72,4 +72,4 @@ def patch_thread():
         # state to start this metrics thread, so give up now
         log = LoggingMixin().log
         msg = 'The following error occured starting the metrics thread! Skipping...\n{}'
-        log.warn(msg.format(str(e)))
+        log.warning(msg.format(str(e)))
