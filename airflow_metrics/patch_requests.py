@@ -1,6 +1,6 @@
 from airflow.settings import Stats
 from airflow.utils.log.logging_mixin import LoggingMixin
-from airflow_metrics.utils.fn_utils import get_local_vars, get_calling_operator
+from airflow_metrics.utils.fn_utils import get_calling_operator
 from airflow_metrics.utils.fn_utils import once
 from airflow_metrics.utils.hook_utils import HookManager
 from datetime import datetime
@@ -67,12 +67,9 @@ def stop_time(ctx, *args, **kwargs):
     Stats.timing('request.duration', duration, tags=tags)
 
 
+@HookManager.success_only
 @whitelisted
 def http_status(ctx, *args, **kwargs):
-    # in the event it threw and error, skip this step
-    if not ctx.get('return'):
-        return
-
     response = ctx['return']
     status = response.status_code
 
