@@ -4,6 +4,7 @@ from airflow_metrics.utils.fn_utils import once
 from airflow_metrics.utils.hook_utils import HookManager
 
 
+@HookManager.success_only
 def get_bq_job(ctx, self, *args, **kwargs):
     bq_cursor = self.bq_cursor
     service = bq_cursor.service
@@ -13,6 +14,7 @@ def get_bq_job(ctx, self, *args, **kwargs):
     ctx['job'] = job
 
 
+@HookManager.success_only
 def bq_upserted(ctx, self, *args, **kwargs):
     query_stats = ctx['job']['statistics']['query']['queryPlan']
 
@@ -40,6 +42,7 @@ def bq_upserted(ctx, self, *args, **kwargs):
     Stats.gauge('task.upserted.bq', written, tags=tags)
 
 
+@HookManager.success_only
 def bq_duration(ctx, self, *args, **kwargs):
     stats = ctx['job']['statistics']
     creation = int(stats['creationTime'])
@@ -61,4 +64,4 @@ def patch_bq():
     bq_operator_execute_manager.register_post_hook(get_bq_job)
     bq_operator_execute_manager.register_post_hook(bq_upserted)
     bq_operator_execute_manager.register_post_hook(bq_duration)
-    bq_operator_execute_manager.wrap_method(skip_on_fail=True)
+    bq_operator_execute_manager.wrap_method()

@@ -10,47 +10,23 @@ class HookManager(LoggingMixin):
         self.pre_hooks = []
         self.post_hooks = []
 
-    def post_process(self):
-        if self.pre_hooks:
-            msg = 'post process only runs the post_hooks but {} pre_hook(s) found'
-            self.log.warn(msg.format(len(self.pre_hooks)))
-
+    def wrap_method(self):
         # TODO: check that this is a method?
         method = getattr(self.cls, self.method_name)
 
         @wraps(method)
         def wrapped_method(*args, **kwargs):
-            return_value = method(*args, **kwargs)
-
-            context = {}
-            for fn in self.post_hooks:
-                return_value = fn(return_value, context, *args, **kwargs)
-
-            return return_value
-
-        setattr(self.cls, self.method_name, wrapped_method)
-
-    def wrap_method(self, skip_on_fail=False):
-        # TODO: check that this is a method?
-        method = getattr(self.cls, self.method_name)
-
-        @wraps(method)
-        def wrapped_method(*args, **kwargs):
-            context = {}
+            context = {'success': False}
             for pre_hook in self.pre_hooks:
                 pre_hook(context, *args, **kwargs)
             try:
                 context['return'] = method(*args, **kwargs)
-            except Exception as e:
-                if not skip_on_fail:
-                    for post_hook in self.post_hooks:
-                        post_hook(context, *args, **kwargs)
-                raise e
-            else:
+                context['success'] = True
+            finally:
                 for post_hook in self.post_hooks:
                     post_hook(context, *args, **kwargs)
-                return context['return']
 
+            return context['return']
 
         setattr(self.cls, self.method_name, wrapped_method)
 
@@ -61,3 +37,12 @@ class HookManager(LoggingMixin):
     def register_post_hook(self, post_hook):
         self.log.info('registering a post-hook: {}'.format(post_hook.__name__))
         self.post_hooks.append(post_hook)
+
+    @classmethod
+    def success_only(cls, fn):
+        @wraps(fn)
+        def wrapped(ctx, *args, **kwargs):
+            if not ctx['success']:
+                return
+            return fn(ctx, *args, **kwargs)
+        return wrapped
