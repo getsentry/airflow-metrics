@@ -23,7 +23,7 @@ class DatadogStatsLogger(BaseHook, LoggingMixin):
 
         self.log.info('Setting up api keys for Datadog')
         initialize(api_key=self.api_key, app_key=self.app_key)
-        self.stats = ThreadStats()
+        self.stats = ThreadStats(namespace='airflow')
         self.stats.start()
 
         register(self.stop)
