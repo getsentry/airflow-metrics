@@ -16,11 +16,17 @@ class HookManager(LoggingMixin):
 
         @wraps(method)
         def wrapped_method(*args, **kwargs):
-            context = {'success': False}
+            context = {}
             for pre_hook in self.pre_hooks:
                 pre_hook(context, *args, **kwargs)
             try:
+                if 'return' in context:
+                    del context['return']
                 context['return'] = method(*args, **kwargs)
+            except Exception as e:
+                context['success'] = False
+                raise e
+            else:
                 context['success'] = True
             finally:
                 for post_hook in self.post_hooks:
@@ -42,7 +48,7 @@ class HookManager(LoggingMixin):
     def success_only(cls, fn):
         @wraps(fn)
         def wrapped(ctx, *args, **kwargs):
-            if not ctx['success']:
+            if 'success' in ctx and not ctx['success']:
                 return
             return fn(ctx, *args, **kwargs)
         return wrapped

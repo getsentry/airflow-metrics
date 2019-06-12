@@ -6,8 +6,6 @@ from airflow_metrics.utils.fn_utils import once
 from airflow_metrics.utils.hook_utils import HookManager
 from functools import wraps
 
-import sys
-
 
 @HookManager.success_only
 def attach_cursor(ctx, *args, **kwargs):
@@ -38,6 +36,18 @@ def get_bq_job(ctx, self, *args, **kwargs):
 
 @HookManager.success_only
 @has_cursor
+def bq_upserted(ctx, self, *args, **kwargs):
+    rows = ctx['job']['statistics']['load']['outputRows']
+    tags = {
+        'dag': self.dag_id,
+        'task': self.task_id,
+        'operator': self.__class__.__name__,
+    }
+    Stats.gauge('task.upserted.gcs_to_bq', rows, tags=tags)
+
+
+@HookManager.success_only
+@has_cursor
 def bq_duration(ctx, self, *args, **kwargs):
     stats = ctx['job']['statistics']
     creation = int(stats['creationTime'])
@@ -53,18 +63,6 @@ def bq_duration(ctx, self, *args, **kwargs):
     Stats.timing('task.duration.gcs_to_bq', end - start, tags=tags)
 
 
-@HookManager.success_only
-@has_cursor
-def rows_copied(ctx, self, *args, **kwargs):
-    rows = ctx['job']['statistics']['load']['outputRows']
-    tags = {
-        'dag': self.dag_id,
-        'task': self.task_id,
-        'operator': self.__class__.__name__,
-    }
-    Stats.gauge('task.upserted.gcs_to_bq', rows, tags=tags)
-
-
 @once
 def patch_gcs_2_bq():
     bq_connection_cursor_manager = HookManager(BigQueryConnection, 'cursor')
@@ -73,6 +71,6 @@ def patch_gcs_2_bq():
 
     gcs_to_bq_operator_execute_manager = HookManager(GoogleCloudStorageToBigQueryOperator, 'execute')
     gcs_to_bq_operator_execute_manager.register_post_hook(get_bq_job)
+    gcs_to_bq_operator_execute_manager.register_post_hook(bq_upserted)
     gcs_to_bq_operator_execute_manager.register_post_hook(bq_duration)
-    gcs_to_bq_operator_execute_manager.register_post_hook(rows_copied)
     gcs_to_bq_operator_execute_manager.wrap_method()

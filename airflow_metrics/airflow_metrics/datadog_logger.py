@@ -23,10 +23,6 @@ class DatadogStatsLogger(BaseHook, LoggingMixin):
 
         self.log.info('Setting up api keys for Datadog')
         initialize(api_key=self.api_key, app_key=self.app_key)
-        self.stats = ThreadStats(namespace='airflow')
-        self.stats.start()
-
-        register(self.stop)
 
     def incr(self, stat, count=1, rate=1, tags=None):
         self.log.info('datadog incr: {} {} {} {}'.format(stat, count, rate, tags))
@@ -56,6 +52,11 @@ class DatadogStatsLogger(BaseHook, LoggingMixin):
         if not tags:
             return None
         return ['{}:{}'.format(k, v) for k, v in tags.items()]
+
+    def start(self):
+        self.stats = ThreadStats(namespace='airflow')
+        self.stats.start()
+        register(self.stop)
 
     def stop(self):
         unregister(self.stop)
