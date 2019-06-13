@@ -5,6 +5,7 @@ from airflow_metrics.utils.fn_utils import once
 from airflow_metrics.utils.hook_utils import HookManager
 from datetime import datetime
 from functools import wraps
+from requests import PreparedRequest
 from requests import Session
 from urllib.parse import urlparse
 
@@ -17,13 +18,12 @@ blacklist = {
 
 
 def attach_request_meta(ctx, *args, **kwargs):
-    url = kwargs.get('url')
-    if not url:
-        if len(args) >= 3:
-            url = args[2]
-        else:
-            log.warning('No url found for request')
-            return
+    if len(args) >= 2 and isinstance(args[1], PreparedRequest):
+        request = args[1]
+        url = request.url
+    else:
+        log.warning('No url found for request')
+        return
     ctx['url'] = url
 
     domain = urlparse(url).netloc
@@ -88,7 +88,7 @@ def http_status(ctx, *args, **kwargs):
 
 @once
 def patch_requests():
-    session_request_manager = HookManager(Session, 'request')
+    session_request_manager = HookManager(Session, 'send')
     session_request_manager.register_pre_hook(attach_request_meta)
     session_request_manager.register_pre_hook(start_time)
     session_request_manager.register_post_hook(stop_time)
