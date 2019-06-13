@@ -1,10 +1,12 @@
-from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
+from functools import wraps
+
 from airflow.contrib.hooks.bigquery_hook import BigQueryConnection
+from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
 from airflow.settings import Stats
+
 from airflow_metrics.utils.fn_utils import get_calling_operator
 from airflow_metrics.utils.fn_utils import once
 from airflow_metrics.utils.hook_utils import HookManager
-from functools import wraps
 
 
 @HookManager.success_only
@@ -14,12 +16,12 @@ def attach_cursor(ctx, *args, **kwargs):
         operator.__big_query_cursor__ = ctx['return']
 
 
-def has_cursor(fn):
-    @wraps(fn)
+def has_cursor(func):
+    @wraps(func)
     def wrapped(ctx, self, *args, **kwargs):
         if not hasattr(self, '__big_query_cursor__'):
-            return
-        return fn(ctx, self, *args, **kwargs)
+            return None
+        return func(ctx, self, *args, **kwargs)
     return wrapped
 
 
@@ -69,7 +71,8 @@ def patch_gcs_2_bq():
     bq_connection_cursor_manager.register_post_hook(attach_cursor)
     bq_connection_cursor_manager.wrap_method()
 
-    gcs_to_bq_operator_execute_manager = HookManager(GoogleCloudStorageToBigQueryOperator, 'execute')
+    gcs_to_bq_operator_execute_manager = \
+            HookManager(GoogleCloudStorageToBigQueryOperator, 'execute')
     gcs_to_bq_operator_execute_manager.register_post_hook(get_bq_job)
     gcs_to_bq_operator_execute_manager.register_post_hook(bq_upserted)
     gcs_to_bq_operator_execute_manager.register_post_hook(bq_duration)

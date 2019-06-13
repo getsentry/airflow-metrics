@@ -1,5 +1,6 @@
 from airflow.contrib.operators.bigquery_operator import BigQueryOperator
 from airflow.settings import Stats
+
 from airflow_metrics.utils.fn_utils import once
 from airflow_metrics.utils.hook_utils import HookManager
 

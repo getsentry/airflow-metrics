@@ -1,18 +1,20 @@
+from datetime import datetime
+from functools import wraps
+from urllib.parse import urlparse
+
 from airflow.settings import Stats
 from airflow.utils.log.logging_mixin import LoggingMixin
+from requests import PreparedRequest
+from requests import Session
+
 from airflow_metrics.utils.fn_utils import get_calling_operator
 from airflow_metrics.utils.fn_utils import once
 from airflow_metrics.utils.hook_utils import HookManager
-from datetime import datetime
-from functools import wraps
-from requests import PreparedRequest
-from requests import Session
-from urllib.parse import urlparse
 
 
-log = LoggingMixin().log
+LOG = LoggingMixin().log
 
-blacklist = {
+BLACKLIST = {
     'api.datadoghq.com',
 }
 
@@ -22,28 +24,29 @@ def attach_request_meta(ctx, *args, **kwargs):
         request = args[1]
         url = request.url
     else:
-        log.warning('No url found for request')
+        LOG.warning('No url found for request')
         return
     ctx['url'] = url
 
     domain = urlparse(url).netloc
-    if domain in blacklist:
-        log.warning('Found blacklisted domain: {}'.format(url))
+    if domain in BLACKLIST:
+        LOG.warning('Found blacklisted domain: {}'.format(url))
         return
     ctx['domain'] = domain
 
     operator = get_calling_operator()
     if not operator:
-        log.warning('Request not made by an operator: {}'.format(url))
+        LOG.warning('Request not made by an operator: {}'.format(url))
         return
     ctx['operator'] = operator
 
 
-def whitelisted(fn):
-    @wraps(fn)
+def whitelisted(func):
+    @wraps(func)
     def wrapped(ctx, *args, **kwargs):
         if ctx.get('url') and ctx.get('domain') and ctx.get('operator'):
-            return fn(ctx, *args, **kwargs)
+            return func(ctx, *args, **kwargs)
+        return None
     return wrapped
 
 
@@ -54,9 +57,9 @@ def start_time(ctx, *args, **kwargs):
 
 @whitelisted
 def stop_time(ctx, *args, **kwargs):
-    start_time = ctx['start_time']
-    stop_time = datetime.now()
-    duration = (stop_time - start_time).total_seconds() * 1000
+    start = ctx['start_time']
+    stop = datetime.now()
+    duration = (stop - start).total_seconds() * 1000
 
     tags = {
         'dag': ctx['operator'].dag_id,

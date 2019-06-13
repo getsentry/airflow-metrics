@@ -1,11 +1,12 @@
 from airflow.models import DagRun
 from airflow.models import TaskInstance
-from airflow_metrics.utils.event_utils import EventManager
-from airflow_metrics.utils.fn_utils import once
 from airflow.settings import Stats
 
+from airflow_metrics.utils.event_utils import EventManager
+from airflow_metrics.utils.fn_utils import once
 
-def dag_duration(target=None, new=None, old=None):
+
+def dag_duration(target=None, **kwargs):
     if target.start_date and target.end_date:
         duration = (target.end_date - target.start_date).total_seconds()
         tags = {
@@ -14,7 +15,7 @@ def dag_duration(target=None, new=None, old=None):
         Stats.timing('dag.duration', duration * 1000, tags=tags)
 
 
-def task_duration(target=None, new=None, old=None):
+def task_duration(target=None, **kwargs):
     if target.duration:
         tags = {
             'dag': target.dag_id,

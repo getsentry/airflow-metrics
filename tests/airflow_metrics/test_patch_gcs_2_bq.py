@@ -1,14 +1,16 @@
+from unittest import TestCase
+from unittest.mock import Mock
+from unittest.mock import patch
+
+from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
+
 from airflow_metrics.airflow_metrics.patch_gcs_2_bq import attach_cursor
 from airflow_metrics.airflow_metrics.patch_gcs_2_bq import bq_duration
 from airflow_metrics.airflow_metrics.patch_gcs_2_bq import bq_upserted
 from airflow_metrics.airflow_metrics.patch_gcs_2_bq import get_bq_job
 from airflow_metrics.airflow_metrics.patch_gcs_2_bq import has_cursor
 from airflow_metrics.utils.hook_utils import HookManager
-from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
 from tests.utility import mockfn
-from unittest import TestCase
-from unittest.mock import Mock
-from unittest.mock import patch
 
 
 class TestAttachCursor(TestCase):
@@ -18,7 +20,7 @@ class TestAttachCursor(TestCase):
                 return mock
 
         class TestOperator(GoogleCloudStorageToBigQueryOperator):
-            def execute(self):
+            def execute(self, context):
                 test_object = TestClass()
                 test_object.test_method()
 
@@ -29,8 +31,8 @@ class TestAttachCursor(TestCase):
         mock = Mock()
         operator = TestOperator(task_id='task-id', bucket=None, source_objects=None,
                                 destination_project_dataset_table=None)
-        operator.execute()
-        assert operator.__big_query_cursor__ == mock
+        operator.execute(None)
+        assert operator.__big_query_cursor__ == mock # pylint: disable=no-member
 
 
 class TestHasCursor(TestCase):
@@ -38,8 +40,8 @@ class TestHasCursor(TestCase):
         class TestClass():
             pass
         ctx = {}
-        self = TestClass()
-        self.__big_query_cursor__ = Mock()
+        this = TestClass()
+        this.__big_query_cursor__ = Mock() # pylint: disable=attribute-defined-outside-init
 
         @mockfn
         def fn_mock(*args, **kwargs):
@@ -47,14 +49,14 @@ class TestHasCursor(TestCase):
         fn = has_cursor(fn_mock)
 
         assert not fn_mock.called
-        fn(ctx, self)
+        fn(ctx, this)
         assert fn_mock.called
 
     def test_doesnt_have_cursor(self):
         class TestClass():
             pass
         ctx = {}
-        self = TestClass()
+        this = TestClass()
 
         @mockfn
         def fn_mock(*args, **kwargs):
@@ -62,7 +64,7 @@ class TestHasCursor(TestCase):
         fn = has_cursor(fn_mock)
 
         assert not fn_mock.called
-        fn(ctx, self)
+        fn(ctx, this)
         assert not fn_mock.called
 
 

@@ -1,19 +1,21 @@
-from airflow.models import TaskInstance
-from airflow.settings import Stats
-from airflow.utils.db import provide_session
-from airflow.utils.log.logging_mixin import LoggingMixin
-from airflow_metrics.utils.fn_utils import once
+import sys
+
 from datetime import datetime, timedelta
-from pytz import utc
 from threading import Thread
 from time import sleep
 
 import sqlalchemy
-import sys
 
+from airflow.models import TaskInstance
+from airflow.settings import Stats
+from airflow.utils.db import provide_session
+from airflow.utils.log.logging_mixin import LoggingMixin
+from pytz import utc
+
+from airflow_metrics.utils.fn_utils import once
 
 @provide_session
-def task_states(since, session=None):
+def task_states(_since, session=None):
     states = (
         session.query(TaskInstance.state, sqlalchemy.func.count())
         .group_by(TaskInstance.state)
@@ -23,7 +25,9 @@ def task_states(since, session=None):
         if state is None:
             continue
 
-        tags = { 'state': state }
+        tags = {
+            'state': state
+        }
         Stats.gauge('task.state', count, tags=tags)
 
 
@@ -31,8 +35,8 @@ def task_states(since, session=None):
 def bq_task_states(since, session=None):
     states = (
         session.query(TaskInstance.state, sqlalchemy.func.count())
-        .filter(TaskInstance.operator=='BigQueryOperator')
-        .filter(TaskInstance.end_date>since)
+        .filter(TaskInstance.operator == 'BigQueryOperator')
+        .filter(TaskInstance.end_date > since)
         .group_by(TaskInstance.state)
     )
 
@@ -40,36 +44,38 @@ def bq_task_states(since, session=None):
         if state is None:
             continue
 
-        tags = { 'state': state }
+        tags = {
+            'state': state
+        }
         Stats.incr('task.state.bq', count, tags=tags)
 
 
-def forever(fns, sleep_time):
+def forever(funcs, sleep_time):
     passed = timedelta(seconds=sleep_time)
 
-    def fn():
+    def wrapped():
         while True:
-            for fn in fns:
+            for func in funcs:
                 since = datetime.utcnow() - passed
-                fn(utc.localize(since))
+                func(utc.localize(since))
             sleep(sleep_time)
-    return fn
+    return wrapped
 
 
 @once
 def patch_thread():
     try:
         if sys.argv[1] == 'scheduler':
-            fns = [
+            funcs = [
                 task_states,
                 bq_task_states,
             ]
-            thread = Thread(target=forever(fns, 10))
+            thread = Thread(target=forever(funcs, 10))
             thread.daemon = True
             thread.start()
-    except Exception as e:
+    except Exception as ex: # pylint: disable=broad-except
         # if any of this throws an error, then we're not in any
         # state to start this metrics thread, so give up now
         log = LoggingMixin().log
         msg = 'The following error occured starting the metrics thread! Skipping...\n{}'
-        log.warning(msg.format(str(e)))
+        log.warning(msg.format(str(ex)))

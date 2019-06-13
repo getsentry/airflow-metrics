@@ -1,9 +1,11 @@
-from airflow.utils.log.logging_mixin import LoggingMixin
 from functools import wraps
+
+from airflow.utils.log.logging_mixin import LoggingMixin
 
 
 class HookManager(LoggingMixin):
     def __init__(self, cls, method_name):
+        super().__init__()
         self.cls = cls
         self.method_name = method_name
 
@@ -11,7 +13,6 @@ class HookManager(LoggingMixin):
         self.post_hooks = []
 
     def wrap_method(self):
-        # TODO: check that this is a method?
         method = getattr(self.cls, self.method_name)
 
         @wraps(method)
@@ -23,9 +24,9 @@ class HookManager(LoggingMixin):
                 if 'return' in context:
                     del context['return']
                 context['return'] = method(*args, **kwargs)
-            except Exception as e:
+            except Exception as ex:
                 context['success'] = False
-                raise e
+                raise ex
             else:
                 context['success'] = True
             finally:
@@ -45,10 +46,10 @@ class HookManager(LoggingMixin):
         self.post_hooks.append(post_hook)
 
     @classmethod
-    def success_only(cls, fn):
-        @wraps(fn)
+    def success_only(cls, func):
+        @wraps(func)
         def wrapped(ctx, *args, **kwargs):
             if 'success' in ctx and not ctx['success']:
-                return
-            return fn(ctx, *args, **kwargs)
+                return None
+            return func(ctx, *args, **kwargs)
         return wrapped
