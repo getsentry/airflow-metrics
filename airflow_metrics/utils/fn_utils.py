@@ -5,6 +5,14 @@ from functools import wraps
 from airflow.models import BaseOperator
 
 
+def capture_exception(ex):
+    try:
+        from sentry_sdk import capture_exception as capture # pylint: disable=import-error
+        capture(ex)
+    except (ModuleNotFoundError, ImportError):
+        pass
+
+
 def once(func):
     context = {
         'ran': False,
@@ -26,7 +34,8 @@ def swallow_error(func):
     def wrapped(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except: # pylint: disable=bare-except
+        except Exception as ex: # pylint: disable=broad-except
+            capture_exception(ex)
             return None
     return wrapped
 
@@ -40,9 +49,8 @@ def get_local_vars(frame_number=0):
         try:
             del frame
             del local_vars
-        except: # pylint: disable=bare-except
-            pass
-
+        except Exception as ex: # pylint: disable=broad-except
+            capture_exception(ex)
 
 def get_calling_operator(max_frames=25):
     for i in range(max_frames):

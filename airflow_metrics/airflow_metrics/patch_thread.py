@@ -9,10 +9,10 @@ import sqlalchemy
 from airflow.models import TaskInstance
 from airflow.settings import Stats
 from airflow.utils.db import provide_session
-from airflow.utils.log.logging_mixin import LoggingMixin
 from pytz import utc
 
 from airflow_metrics.utils.fn_utils import once
+from airflow_metrics.utils.fn_utils import capture_exception
 
 @provide_session
 def task_states(_since, session=None):
@@ -74,8 +74,4 @@ def patch_thread():
             thread.daemon = True
             thread.start()
     except Exception as ex: # pylint: disable=broad-except
-        # if any of this throws an error, then we're not in any
-        # state to start this metrics thread, so give up now
-        log = LoggingMixin().log
-        msg = 'The following error occured starting the metrics thread! Skipping...\n{}'
-        log.warning(msg.format(str(ex)))
+        capture_exception(ex)
