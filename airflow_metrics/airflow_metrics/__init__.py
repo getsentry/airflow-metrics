@@ -2,9 +2,11 @@ from airflow import configuration as conf
 
 from airflow_metrics.utils.fn_utils import once
 from airflow_metrics.utils.fn_utils import enabled
+from airflow_metrics.utils.fn_utils import swallow_error
 
 
 @once
+@swallow_error
 def patch():
     if not enabled():
         return
