@@ -1,0 +1,16 @@
+language: python
+python: 3.6
+
+env:
+  global:
+    - SLUGIFY_USES_TEXT_UNIDECODE=yes
+
+install:
+  - "pip install -r requirements.txt"
+  - "pip install -r requirements-dev.txt"
+
+script: 
+  - "airflow initdb"
+  - "airflow connections --add --conn_id datadog_default --conn_type HTTP --conn_extr '{\"api_key\": \"\"}'"
+  - "pytest -v"
+
