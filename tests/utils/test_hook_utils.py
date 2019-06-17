@@ -19,6 +19,25 @@ class TestHookManager(TestCase):
         with raises(AttributeError):
             fake_method_manager.wrap_method()
 
+    def test_swallows_errors(self):
+        class TestClass():
+            def test_method(self):
+                return True
+
+        def pre_hook(*args, **kwargs):
+            raise Exception()
+
+        def post_hook(*args, **kwargs):
+            raise Exception()
+
+        test_method_manager = HookManager(TestClass, 'test_method')
+        test_method_manager.register_pre_hook(pre_hook)
+        test_method_manager.register_post_hook(post_hook)
+        test_method_manager.wrap_method()
+
+        test_obj = TestClass()
+        assert test_obj.test_method()
+
     def test_call_order(self):
         call_order = []
 

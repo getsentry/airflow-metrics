@@ -5,6 +5,7 @@ from airflow.models import BaseOperator
 from airflow_metrics.utils.fn_utils import once
 from airflow_metrics.utils.fn_utils import get_calling_operator
 from airflow_metrics.utils.fn_utils import get_local_vars
+from airflow_metrics.utils.fn_utils import swallow_error
 from tests.utility import mockfn
 
 
@@ -19,6 +20,15 @@ class TestOnce(TestCase):
         assert fn_mock.call_count == 1
         func()
         assert fn_mock.call_count == 1
+
+
+class TestSwallowError(TestCase):
+    def test_swallow_error(self):
+        @swallow_error
+        def error():
+            raise Exception()
+
+        error()
 
 
 class TestGetLocalVars(TestCase):

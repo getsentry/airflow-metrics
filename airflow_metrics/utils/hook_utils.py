@@ -2,6 +2,8 @@ from functools import wraps
 
 from airflow.utils.log.logging_mixin import LoggingMixin
 
+from airflow_metrics.utils.fn_utils import swallow_error
+
 
 class HookManager(LoggingMixin):
     def __init__(self, cls, method_name):
@@ -17,25 +19,36 @@ class HookManager(LoggingMixin):
 
         @wraps(method)
         def wrapped_method(*args, **kwargs):
-            context = {}
-            for pre_hook in self.pre_hooks:
-                pre_hook(context, *args, **kwargs)
+            hook_context = {}
+
+            self.run_pre_hooks(hook_context, *args, **kwargs)
+
             try:
-                if 'return' in context:
-                    del context['return']
-                context['return'] = method(*args, **kwargs)
+                if 'return' in hook_context:
+                    # in the event that the method fails, ensure 'return' is not a key
+                    del hook_context['return']
+                hook_context['return'] = method(*args, **kwargs)
             except Exception as ex:
-                context['success'] = False
+                hook_context['success'] = False
                 raise ex
             else:
-                context['success'] = True
+                hook_context['success'] = True
             finally:
-                for post_hook in self.post_hooks:
-                    post_hook(context, *args, **kwargs)
+                self.run_post_hooks(hook_context, *args, **kwargs)
 
-            return context['return']
+            return hook_context['return']
 
         setattr(self.cls, self.method_name, wrapped_method)
+
+    @swallow_error
+    def run_pre_hooks(self, hook_context, *args, **kwargs):
+        for pre_hook in self.pre_hooks:
+            pre_hook(hook_context, *args, **kwargs)
+
+    @swallow_error
+    def run_post_hooks(self, hook_context, *args, **kwargs):
+        for post_hook in self.post_hooks:
+            post_hook(hook_context, *args, **kwargs)
 
     def register_pre_hook(self, pre_hook):
         self.log.info('registering a pre-hook: {}'.format(pre_hook.__name__))

@@ -21,6 +21,16 @@ def once(func):
     return wrapped
 
 
+def swallow_error(func):
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except: # pylint: disable=bare-except
+            return None
+    return wrapped
+
+
 def get_local_vars(frame_number=0):
     try:
         frame = sys._getframe(frame_number + 1) # pylint: disable=protected-access
