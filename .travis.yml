@@ -12,9 +12,10 @@ install:
 jobs:
   include:
     - stage: test
-      script:
+      before_script:
         - "airflow initdb"
         - "airflow connections --add --conn_id datadog_default --conn_type HTTP --conn_extr '{\"api_key\": \"\"}'"
+      script:
         - "pytest -v"
     - stage: test
       script:
