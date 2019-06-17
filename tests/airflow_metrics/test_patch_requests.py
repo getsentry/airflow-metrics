@@ -1,17 +1,17 @@
-from airflow_metrics.airflow_metrics import patch_requests 
-from airflow_metrics.airflow_metrics.patch_requests import attach_request_meta
-from airflow_metrics.airflow_metrics.patch_requests import http_status
-from airflow_metrics.airflow_metrics.patch_requests import start_time
-from airflow_metrics.airflow_metrics.patch_requests import stop_time
-from airflow.models import BaseOperator
 from datetime import datetime
-from freezegun import freeze_time
-from requests import PreparedRequest
-from tests.utility import mockfn
 from unittest import TestCase
 from unittest.mock import Mock
 from unittest.mock import patch
 from urllib.parse import urlparse
+
+from airflow.models import BaseOperator
+from freezegun import freeze_time
+from requests import PreparedRequest
+
+from airflow_metrics.airflow_metrics.patch_requests import attach_request_meta
+from airflow_metrics.airflow_metrics.patch_requests import http_status
+from airflow_metrics.airflow_metrics.patch_requests import start_time
+from airflow_metrics.airflow_metrics.patch_requests import stop_time
 
 
 URL = 'https://httpbin.org/get'
@@ -51,7 +51,7 @@ class TestAttachRequestMeta(TestCase):
         assert 'url' not in ctx
 
     def test_blacklisted(self):
-        with patch('airflow_metrics.airflow_metrics.patch_requests.blacklist', {DOMAIN}):
+        with patch('airflow_metrics.airflow_metrics.patch_requests.BLACKLIST', {DOMAIN}):
             ctx = {}
             args = [1, self.request]
             kwargs = {}
@@ -69,7 +69,7 @@ class TestAttachRequestMeta(TestCase):
         this = self
 
         class MockOperator(BaseOperator):
-            def execute(self):
+            def execute(self, context):
                 ctx = {}
                 args = [1, this.request]
                 kwargs = {}
@@ -79,7 +79,7 @@ class TestAttachRequestMeta(TestCase):
                 assert ctx['operator'] == operator
 
         operator = MockOperator(task_id='task-id')
-        operator.execute()
+        operator.execute(None)
 
 
 class TestStartTime(TestCase):

@@ -9,8 +9,14 @@ install:
   - "pip install -r requirements.txt"
   - "pip install -r requirements-dev.txt"
 
-script: 
-  - "airflow initdb"
-  - "airflow connections --add --conn_id datadog_default --conn_type HTTP --conn_extr '{\"api_key\": \"\"}'"
-  - "pytest -v"
-
+jobs:
+  include:
+    - stage: test
+      script:
+        - "airflow initdb"
+        - "airflow connections --add --conn_id datadog_default --conn_type HTTP --conn_extr '{\"api_key\": \"\"}'"
+        - "pytest -v"
+    - stage: test
+      script:
+        - "pylint --disable=missing-docstring airflow_metrics"
+        - "pylint --disable=missing-docstring --disable=too-few-public-methods --disable=no-self-use --disable=invalid-name tests"

@@ -1,7 +1,9 @@
-from airflow_metrics.utils.hook_utils import HookManager
-from pytest import raises
-from tests.utility import mockfn
 from unittest import TestCase
+
+from pytest import raises
+
+from airflow_metrics.utils.hook_utils import HookManager
+from tests.utility import mockfn
 
 
 class TestHookManager(TestCase):
@@ -17,12 +19,11 @@ class TestHookManager(TestCase):
         with raises(AttributeError):
             fake_method_manager.wrap_method()
 
-
     def test_call_order(self):
         call_order = []
 
         class TestClass():
-            def test_method(*args, **kwargs):
+            def test_method(self):
                 call_order.append('test method')
 
         def pre_hook_1(*args, **kwargs):
@@ -58,7 +59,7 @@ class TestHookManager(TestCase):
 
     def test_carries_context(self):
         class TestClass():
-            def test_method(*args, **kwargs):
+            def test_method(self):
                 pass
 
         @mockfn
@@ -102,7 +103,7 @@ class TestHookManager(TestCase):
 
     def test_success_status_true(self):
         class TestClass():
-            def test_method(*args, **kwargs):
+            def test_method(self):
                 pass
 
         @mockfn
@@ -127,8 +128,8 @@ class TestHookManager(TestCase):
 
     def test_success_status_false(self):
         class TestClass():
-            def test_method(*args, **kwargs):
-                raise
+            def test_method(self):
+                raise Exception()
 
         @mockfn
         def pre_hook(ctx, *args, **kwargs):
@@ -149,7 +150,7 @@ class TestHookManager(TestCase):
 
     def test_pass_on_return_value(self):
         class TestClass():
-            def test_method(*args, **kwargs):
+            def test_method(self):
                 return 'return value'
 
         @mockfn
@@ -167,7 +168,7 @@ class TestHookManager(TestCase):
 
     def test_modify_return_value(self):
         class TestClass():
-            def test_method(*args, **kwargs):
+            def test_method(self):
                 return 'return value'
 
         def post_hook(ctx, *args, **kwargs):
@@ -182,7 +183,7 @@ class TestHookManager(TestCase):
 
     def test_success_only_true(self):
         class TestClass():
-            def test_method(*args, **kwargs):
+            def test_method(self):
                 pass
 
         @mockfn
@@ -201,8 +202,8 @@ class TestHookManager(TestCase):
 
     def test_success_only_false(self):
         class TestClass():
-            def test_method(*args, **kwargs):
-                raise
+            def test_method(self):
+                raise Exception()
 
         @mockfn
         def post_hook_mock(*args, **kwargs):

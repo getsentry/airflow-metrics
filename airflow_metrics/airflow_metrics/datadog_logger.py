@@ -1,14 +1,16 @@
+from atexit import register, unregister
+from datetime import timedelta
+
 from airflow.exceptions import AirflowException
 from airflow.hooks.base_hook import BaseHook
 from airflow.utils.log.logging_mixin import LoggingMixin
-from atexit import register, unregister
 from datadog import initialize, ThreadStats
-from datetime import timedelta
 
 
-class DatadogStatsLogger(BaseHook, LoggingMixin):
+class DatadogStatsLogger(LoggingMixin):
     def __init__(self, datadog_conn_id='datadog_default'):
-        conn = self.get_connection(datadog_conn_id)
+        super().__init__()
+        conn = BaseHook.get_connection(datadog_conn_id)
         self.api_key = conn.extra_dejson.get('api_key', None)
         self.app_key = conn.extra_dejson.get('app_key', None)
         self.source_type_name = conn.extra_dejson.get('source_type_name ', None)
@@ -22,6 +24,7 @@ class DatadogStatsLogger(BaseHook, LoggingMixin):
                                    'Datadog connection details')
 
         self.log.info('Setting up api keys for Datadog')
+        self.stats = None
         initialize(api_key=self.api_key, app_key=self.app_key)
 
     def incr(self, stat, count=1, rate=1, tags=None):
@@ -48,7 +51,8 @@ class DatadogStatsLogger(BaseHook, LoggingMixin):
         self.stats.timing(stat, delta, sample_rate=rate,
                           tags=self._format_tags(tags))
 
-    def _format_tags(self, tags):
+    @classmethod
+    def _format_tags(cls, tags):
         if not tags:
             return None
         return ['{}:{}'.format(k, v) for k, v in tags.items()]

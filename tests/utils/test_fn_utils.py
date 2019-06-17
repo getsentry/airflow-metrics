@@ -1,10 +1,11 @@
+from unittest import TestCase
+
 from airflow.models import BaseOperator
+
 from airflow_metrics.utils.fn_utils import once
 from airflow_metrics.utils.fn_utils import get_calling_operator
 from airflow_metrics.utils.fn_utils import get_local_vars
 from tests.utility import mockfn
-from unittest import TestCase
-from unittest.mock import Mock
 
 
 class TestOnce(TestCase):
@@ -12,11 +13,11 @@ class TestOnce(TestCase):
         @mockfn
         def fn_mock():
             pass
-        fn = once(fn_mock)
+        func = once(fn_mock)
         assert fn_mock.call_count == 0
-        fn()
+        func()
         assert fn_mock.call_count == 1
-        fn()
+        func()
         assert fn_mock.call_count == 1
 
 
@@ -33,7 +34,6 @@ class TestGetLocalVars(TestCase):
             local_vars = get_local_vars(3)
             assert local_vars['c'] == 3
             assert local_vars['d'] == 4
-            'inner'
 
         @mockfn
         def middle(c):
@@ -42,6 +42,8 @@ class TestGetLocalVars(TestCase):
             assert local_vars['a'] == 1
             assert local_vars['b'] == 2
             inner()
+            del c
+            del d
 
         @mockfn
         def outer(a):
@@ -50,6 +52,8 @@ class TestGetLocalVars(TestCase):
             assert local_vars['a'] == 1
             assert local_vars['b'] == 2
             middle(3)
+            del a
+            del b
 
         assert not outer.called
         assert not middle.called
@@ -67,13 +71,13 @@ class TestGetCallingOperator(TestCase):
             assert get_calling_operator() is self
 
         class MyOperator(BaseOperator):
-            def execute(self, *args, **kwargs):
+            def execute(self, context):
                 assert get_calling_operator() is self
                 test_fn(self)
 
         operator = MyOperator(task_id='im-a-test')
         assert not test_fn.called
-        operator.execute()
+        operator.execute(None)
         assert test_fn.called
 
     def test_called_by_out_of_range_operator(self):
@@ -82,13 +86,13 @@ class TestGetCallingOperator(TestCase):
             assert get_calling_operator(2) is None
 
         class MyOperator(BaseOperator):
-            def execute(self, *args, **kwargs):
+            def execute(self, context):
                 assert get_calling_operator(2) is self
                 test_fn()
 
         operator = MyOperator(task_id='im-a-test')
         assert not test_fn.called
-        operator.execute()
+        operator.execute(None)
         assert test_fn.called
 
     def test_not_called_by_operator(self):
@@ -101,4 +105,3 @@ class TestGetCallingOperator(TestCase):
         assert not test_fn.called
         test_fn()
         assert test_fn.called
-

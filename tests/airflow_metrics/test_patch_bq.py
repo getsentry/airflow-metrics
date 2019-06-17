@@ -1,9 +1,10 @@
-from airflow_metrics.airflow_metrics.patch_bq import bq_duration
-from airflow_metrics.airflow_metrics.patch_bq import bq_upserted
-from airflow_metrics.airflow_metrics.patch_bq import get_bq_job
 from unittest import TestCase
 from unittest.mock import Mock
 from unittest.mock import patch
+
+from airflow_metrics.airflow_metrics.patch_bq import bq_duration
+from airflow_metrics.airflow_metrics.patch_bq import bq_upserted
+from airflow_metrics.airflow_metrics.patch_bq import get_bq_job
 
 
 class TestGetBqJob(TestCase):
