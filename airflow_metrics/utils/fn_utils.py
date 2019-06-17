@@ -2,6 +2,8 @@ import sys
 
 from functools import wraps
 
+from airflow import configuration as conf
+from airflow.exceptions import AirflowConfigException
 from airflow.models import BaseOperator
 
 
@@ -11,6 +13,16 @@ def capture_exception(ex):
         capture(ex)
     except (ModuleNotFoundError, ImportError):
         pass
+
+
+def enabled(metric='', default=True):
+    if metric:
+        metric = '{}_'.format(metric)
+    metric = 'airflow_metrics_{}enabled'.format(metric)
+    try:
+        return conf.getboolean('airflow_metrics', metric)
+    except AirflowConfigException:
+        return default
 
 
 def once(func):
