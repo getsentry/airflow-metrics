@@ -47,14 +47,21 @@ airflow_metrics_thread_enabled = True`
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
-## Getting Started
+### Getting Started
 
 Set up your virtual environment for python3 however you like.
 
-```
+```shell
 pip install -e .
 airflow initdb
 airflow connections --add --conn_id datadog_default --conn_type HTTP --conn_extr '{"api_key": ""}'
 ```
 
 **Note**: The last step is necessary, otherwise the plugin will not initialize correctly and will not collect metrics. But you are free to add a dummy key for development purposes.
+
+### Running Tests
+
+```
+pip install -r requirements-dev.txt
+pytest
+```
