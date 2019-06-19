@@ -61,7 +61,7 @@ airflow connections --add --conn_id datadog_default --conn_type HTTP --conn_extr
 
 ### Running Tests
 
-```
+```shell
 pip install -r requirements-dev.txt
 pytest
 ```
