@@ -1,3 +1,4 @@
+apache-airflow==1.10.2
 freezegun==0.3.12
 keyring==19.0.2
 pylint==2.3.1

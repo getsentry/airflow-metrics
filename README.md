@@ -4,6 +4,8 @@
 
 `airflow-metrics` is an Airflow plugin for automatically sending metrics from Airflow to Datadog.
 
+**Tested For**: `apache-airflow==1.10.2`
+
 ## Installation
 
 ```shell
