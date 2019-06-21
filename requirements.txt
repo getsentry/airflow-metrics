@@ -1,4 +1,1 @@
-apache-airflow==1.10.2
-datadog==0.29.3
-google-api-python-client==1.7.9
-pandas-gbq==0.10.0
+datadog>=0.29.3

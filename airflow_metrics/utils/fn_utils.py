@@ -5,6 +5,10 @@ from functools import wraps
 from airflow import configuration as conf
 from airflow.exceptions import AirflowConfigException
 from airflow.models import BaseOperator
+from airflow.utils.log.logging_mixin import LoggingMixin
+
+
+LOG = LoggingMixin().log
 
 
 def capture_exception(ex):
@@ -12,7 +16,7 @@ def capture_exception(ex):
         from sentry_sdk import capture_exception as capture # pylint: disable=import-error
         capture(ex)
     except (ModuleNotFoundError, ImportError):
-        pass
+        LOG.warning(str(ex))
 
 
 def enabled(metric='', default=True):

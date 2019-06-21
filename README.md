@@ -4,10 +4,20 @@
 
 `airflow-metrics` is an Airflow plugin for automatically sending metrics from Airflow to Datadog.
 
+**Tested For**: `apache-airflow>=1.10.2, <=1.10.3`
+
 ## Installation
 
 ```shell
 pip install airflow-metrics
+```
+
+### Optional
+
+If you want to the metrics from `BigQueryOperator` and `GoogleCloudStorageToBigQueryOperator`, then make sure the necessary dependencies are installed.
+
+```shell
+pip install apache-airflow[gcp_api]
 ```
 
 ## Setup
