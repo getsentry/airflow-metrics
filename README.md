@@ -36,7 +36,7 @@ That's it! `airflow-metrics` will now begin sending metrics from Airflow to Data
 
 ## Configuration
 
-By default, `airflow-metrics` will begin extracting metrics from Airflow as you run your DAGs and send them to overflow. You can opt out of it entirely or opt out of a subset of the metrics by setting these configurations in your `airflow.cfg`
+By default, `airflow-metrics` will begin extracting metrics from Airflow as you run your DAGs and send them to Datadog. You can opt out of it entirely or opt out of a subset of the metrics by setting these configurations in your `airflow.cfg`
 
 ```
 [airflow_metrics]
