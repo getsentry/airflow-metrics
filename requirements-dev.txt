@@ -1,8 +1,11 @@
+Flask==1.0.3
 apache-airflow>=1.10.2, <2.0.0dev
 freezegun==0.3.12
 google-api-python-client>=1.6.0, <2.0.0dev
+jinja2==2.10.0
 keyring==19.0.2
 pandas-gbq
 pylint==2.3.1
 pytest==4.6.3
 twine==1.13.0
+werkzeug==0.14.1
