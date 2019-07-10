@@ -65,7 +65,7 @@ def forever(funcs, sleep_time):
 @once
 def patch_thread():
     try:
-        if sys.argv[1] == 'scheduler':
+        if len(sys.argv) > 1 and sys.argv[1] == 'scheduler':
             funcs = [
                 task_states,
                 bq_task_states,
