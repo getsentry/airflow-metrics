@@ -4,7 +4,7 @@ from datetime import timedelta
 from airflow.exceptions import AirflowException
 from airflow.hooks.base_hook import BaseHook
 from airflow.utils.log.logging_mixin import LoggingMixin
-from datadog import initialize, ThreadStats
+from datadog import initialize, DogStatsd, ThreadStats
 
 
 class DatadogStatsLogger(LoggingMixin):
@@ -25,6 +25,7 @@ class DatadogStatsLogger(LoggingMixin):
 
         self.log.info('Setting up api keys for Datadog')
         self.stats = None
+        self.mode = None
         initialize(api_key=self.api_key, app_key=self.app_key)
 
     def incr(self, stat, count=1, rate=1, tags=None):
@@ -58,10 +59,31 @@ class DatadogStatsLogger(LoggingMixin):
         return ['{}:{}'.format(k, v) for k, v in tags.items()]
 
     def start(self):
-        self.stats = ThreadStats(namespace='airflow')
-        self.stats.start()
-        register(self.stop)
+        self.thread_mode()
 
     def stop(self):
+        if self.mode != 'thread':
+            return
+
         unregister(self.stop)
         self.stats.stop()
+
+    def thread_mode(self):
+        if self.mode == 'thread':
+            return
+
+        self.stats = ThreadStats(namespace='airflow_testing')
+        self.stats.start()
+        register(self.stop)
+        self.mode = 'thread'
+
+    def normal_mode(self):
+        if self.mode == 'normal':
+            return
+
+        self.stop()
+        if not self.statsd:
+            self.statsd = DogStatsd(host='https://api.datadoghq.com',
+                                   namespace='airflow_testing')
+        self.stats = self.statsd
+        self.mode = 'normal'

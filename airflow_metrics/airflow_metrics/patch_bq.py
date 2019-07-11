@@ -55,6 +55,9 @@ def bq_duration(ctx, self, *args, **kwargs):
         'task': self.task_id,
         'operator': self.__class__.__name__,
     }
+
+    print('here we go', start - creation, end - start)
+
     Stats.timing('task.delay.bq', start - creation, tags=tags)
     Stats.timing('task.duration.bq', end - start, tags=tags)
 
