@@ -23,7 +23,7 @@ def patch_stats():
         ti_run_raw_task_manager.wrap_method()
 
         def join(_, self, *args, **kwargs):
-            self._flush_thread.join()
+            self._flush_thread.join() # pylint: disable=protected-access
 
         threadstats_stop_manager = HookManager(ThreadStats, 'stop')
         threadstats_stop_manager.register_post_hook(join)
