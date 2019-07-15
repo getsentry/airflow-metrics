@@ -34,6 +34,24 @@ airflow connections --add --conn_id datadog_default --conn_type HTTP --conn_extr
 
 That's it! `airflow-metrics` will now begin sending metrics from Airflow to Datadog automatically.
 
+### Metrics
+
+`airflow-metrics` will automatically begin reporting the following metrics
+
+* `airflow.task.state` The total number of tasks in a state where the state is stored as a tag.
+* `airflow.task.state.bq` The current number of big query tasks in a state where the state is stored as a tag.
+* `airflow.dag.duration` The duration of a DAG in ms.
+* `airflow.task.duration` The duration of a task in ms.
+* `airflow.request.duration` The duration of a HTTP request in ms.
+* `airflow.request.status.success` The current number of HTTP requests with successful status codes (<400)
+* `airflow.request.status.failure` The current number of HTTP requests with unsuccessful status codes (>=400)
+* `airflow.task.upserted.bq` The number of rows upserted by a BigQueryOperator.
+* `airflow.task.delay.bq` The time taken for the big query job from a BigQueryOperator to start in ms.
+* `airflow.task.duration.bq` The time taken for the big query job from a BigQueryOperator to finish in ms.
+* `airflow.task.upserted.gcs_to_bq` The number of rows upserted by a GoogleCloudStorageToBigQueryOperator.
+* `airflow.task.delay.gcs_to_bq` The time taken for the big query from a GoogleCloudStorageToBigQueryOperator to start in ms.
+* `airflow.task.duration.gcs_to_bq` The time taken for the big query from a GoogleCloudStorageToBigQueryOperator to finish in ms.
+
 ## Configuration
 
 By default, `airflow-metrics` will begin extracting metrics from Airflow as you run your DAGs and send them to Datadog. You can opt out of it entirely or opt out of a subset of the metrics by setting these configurations in your `airflow.cfg`
