@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='airflow-metrics',
-    version='0.1.4',
+    version='0.1.5',
     author='zylphrex',
     author_email='zylphrex@gmail.com',
     maintainer='zylphrex',
