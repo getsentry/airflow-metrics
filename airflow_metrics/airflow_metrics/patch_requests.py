@@ -30,13 +30,13 @@ def attach_request_meta(ctx, *args, **kwargs):
 
     domain = urlparse(url).netloc
     if domain in BLACKLIST:
-        LOG.warning('Found blacklisted domain: {}'.format(url))
+        LOG.warning('Found blacklisted domain: {}'.format(domain))
         return
     ctx['domain'] = domain
 
     operator = get_calling_operator()
     if not operator:
-        LOG.warning('Request not made by an operator: {}'.format(url))
+        LOG.warning('Request not made by an operator: {}'.format(domain))
         return
     ctx['operator'] = operator
 
