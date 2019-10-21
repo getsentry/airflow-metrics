@@ -1,3 +1,4 @@
+import os
 import sys
 
 from functools import wraps
@@ -13,32 +14,47 @@ LOG = LoggingMixin().log
 
 def capture_exception(ex):
     try:
-        from sentry_sdk import capture_exception as capture # pylint: disable=import-error
+        from sentry_sdk import (
+            capture_exception as capture,
+        )  # pylint: disable=import-error
+
         capture(ex)
     except (ModuleNotFoundError, ImportError):
         LOG.warning(str(ex))
 
 
-def enabled(metric='', default=True):
+def _str_to_bool(string):
+    return string.lower() in ("yes", "true", "t", "1")
+
+
+def enabled(metric="", default=True):
     if metric:
-        metric = '{}_'.format(metric)
-    metric = 'airflow_metrics_{}enabled'.format(metric)
-    try:
-        return conf.getboolean('airflow_metrics', metric)
-    except AirflowConfigException:
-        return default
+        metric = "{}_".format(metric)
+    metric = "airflow_metrics_{}enabled".format(metric)
+
+    env_var = "AIRFLOW__AIRFLOW_METRICS__" + metric.upper()
+
+    env_var_rslt = os.environ[env_var]
+
+    bool_env_var_rslt = _str_to_bool(env_var_rslt)
+
+    if len(env_var_rslt) > 0:
+        return bool_env_var_rslt
+    else:
+        try:
+            return conf.getboolean("airflow_metrics", metric)
+        except AirflowConfigException:
+            return default
 
 
 def once(func):
-    context = {
-        'ran': False,
-    }
+    context = {"ran": False}
 
     @wraps(func)
     def wrapped(*args, **kwargs):
-        if context['ran']: # turn the second call and onwards into noop
+        if context["ran"]:  # turn the second call and onwards into noop
             return None
-        context['ran'] = True
+        context["ran"] = True
 
         return func(*args, **kwargs)
 
@@ -50,23 +66,25 @@ def swallow_error(func):
     def wrapped(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except Exception as ex: # pylint: disable=broad-except
+        except Exception as ex:  # pylint: disable=broad-except
             capture_exception(ex)
             return None
+
     return wrapped
 
 
 def get_local_vars(frame_number=0):
     try:
-        frame = sys._getframe(frame_number + 1) # pylint: disable=protected-access
+        frame = sys._getframe(frame_number + 1)  # pylint: disable=protected-access
         local_vars = frame.f_locals
         return local_vars
     finally:
         try:
             del frame
             del local_vars
-        except Exception as ex: # pylint: disable=broad-except
+        except Exception as ex:  # pylint: disable=broad-except
             capture_exception(ex)
+
 
 def get_calling_operator(max_frames=25):
     for i in range(max_frames):
@@ -75,7 +93,7 @@ def get_calling_operator(max_frames=25):
         except ValueError:
             return None
 
-        self = local_vars.get('self', None)
+        self = local_vars.get("self", None)
 
         if self is None:
             continue
