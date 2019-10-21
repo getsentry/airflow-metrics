@@ -1,7 +1,7 @@
 from airflow.utils.log.logging_mixin import LoggingMixin
 
 try:
-    from airflow.contrib.operators.bigquery_operator import BigQueryOperator
+    from airflow.operators.bigquery_operator import BigQueryOperator
 except ModuleNotFoundError:
     LoggingMixin().log.info("BigQuery not configured in Airflow. Skipping...")
 

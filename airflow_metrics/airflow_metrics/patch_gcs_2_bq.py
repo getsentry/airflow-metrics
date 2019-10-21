@@ -1,8 +1,8 @@
 from airflow.utils.log.logging_mixin import LoggingMixin
 
 try:
-    from airflow.contrib.hooks.bigquery_hook import BigQueryConnection
-    from airflow.contrib.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
+    from airflow.hooks.bigquery_hook import BigQueryConnection
+    from airflow.operators.gcs_to_bq import GoogleCloudStorageToBigQueryOperator
 except ModuleNotFoundError:
     LoggingMixin().log.info(
         "Google Cloud Provider not configured in Airflow. Skipping..."
