@@ -8,4 +8,4 @@ pandas-gbq
 pylint==2.3.1
 pytest==4.6.3
 twine==1.13.0
-werkzeug==0.14.1
+werkzeug==0.15.3
