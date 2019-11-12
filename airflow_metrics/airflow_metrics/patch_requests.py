@@ -24,7 +24,7 @@ def attach_request_meta(ctx, *args, **kwargs):
         request = args[1]
         url = request.url
     else:
-        LOG.warning('No url found for request')
+        LOG.info('No url found for request')
         return
     ctx['url'] = url
 
