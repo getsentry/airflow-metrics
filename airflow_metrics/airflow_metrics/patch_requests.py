@@ -30,7 +30,7 @@ def attach_request_meta(ctx, *args, **kwargs):
 
     domain = urlparse(url).netloc
     if domain in BLACKLIST:
-        LOG.warning('Found blacklisted domain: {}'.format(domain))
+        LOG.info('Found blacklisted domain: {}'.format(domain))
         return
     ctx['domain'] = domain
 
