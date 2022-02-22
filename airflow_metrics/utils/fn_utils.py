@@ -57,6 +57,7 @@ def swallow_error(func):
 
 
 def get_local_vars(frame_number=0):
+    frame = None
     try:
         frame = sys._getframe(frame_number + 1) # pylint: disable=protected-access
         local_vars = frame.f_locals
